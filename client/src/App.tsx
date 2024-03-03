@@ -2,7 +2,7 @@
 import { Chart } from 'react-google-charts';
 import { data as dataFile } from './assets/input';
 import './index.css';
-import { FCFS, Priority, SJF, SJFPreemptive } from './assets/logic';
+import { FCFS, Priority, SJF, SJFPreemptive, RoundRobin } from './assets/logic';
 import { useEffect, useState } from 'react';
 import { options } from './assets/logic';
 import { DownOutlined } from '@ant-design/icons';
@@ -49,6 +49,15 @@ const App = () => {
 			),
 			onClick: () => setMode('SJFPreemptive'),
 		},
+		{
+			key: '5',
+			label: (
+				<a target="_blank" rel="noopener noreferrer">
+					RoundRobin
+				</a>
+			),
+			onClick: () => setMode('RoundRobin'),
+		},
 	];
 	useEffect(() => {
 		let res;
@@ -61,6 +70,9 @@ const App = () => {
 				break;
 			case 'SJFPreemptive':
 				res = SJFPreemptive(dataFile);
+				break;
+			case 'RoundRobin':
+				res = RoundRobin(dataFile, 2);
 				break;
 			default:
 				res = SJF(dataFile);

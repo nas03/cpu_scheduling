@@ -82,10 +82,9 @@ export const FCFS = (data: Process[]) => {
 export const SJF = (data: Process[]) => {
 	const result = sortByBurstTime(data);
 	let currentTime = result[0].Arrive;
-	const rows: (string | Date)[][] = []; // Explicitly type the 'rows' variable as an array of '(string | Date)[]' types.
+	const rows: (string | Date)[][] = [];
 	for (let i = 0; i < result.length; i++) {
 		const row: (string | Date)[] = [
-			// Explicitly type the 'row' variable as an array of '(string | Date)[]' types.
 			i.toString(),
 			result[i].Process.toString(),
 			new Date(0, 0, 0, 0, 0, currentTime),
@@ -163,7 +162,6 @@ export const SJFPreemptive = (data: Process[]) => {
 		}
 	}
 	processQueue.queue.forEach((row) => {
-		
 		rows.push(row);
 	});
 	console.log('process', processQueue);
@@ -185,5 +183,121 @@ export const Priority = (data: Process[]) => {
 		rows.push(row);
 	}
 
+	return [columns, ...rows];
+};
+export const PreemptivePriority = (data: Process[]) => {
+	const result = sortByArrivalTime(data);
+	let currentTime = result[0].Arrive;
+	const rows: (string | Date)[][] = [];
+	let i = 0;
+	const processQueue = new Queue([]);
+	let readyQueue: Process[] = [result[0]];
+	let lastIndex = i;
+	while (readyQueue.length > 0) {
+		if (i + 1 == result.length) {
+			readyQueue = sortByPriority(readyQueue);
+			processQueue.enqueue([
+				readyQueue[0].ID,
+				readyQueue[0].Process,
+				new Date(0, 0, 0, 0, 0, currentTime),
+				new Date(0, 0, 0, 0, 0, currentTime + readyQueue[0].BurstTime),
+			]);
+			currentTime += readyQueue[0].BurstTime;
+			readyQueue.shift();
+			//debugger;
+		} else if (readyQueue[0].Priority <= result[i + 1].Priority) {
+			//debugger;
+			processQueue.enqueue([
+				readyQueue[0].ID,
+				readyQueue[0].Process,
+				new Date(0, 0, 0, 0, 0, currentTime),
+				new Date(0, 0, 0, 0, 0, currentTime + readyQueue[0].BurstTime),
+			]);
+			currentTime += readyQueue[0].BurstTime;
+			readyQueue.shift();
+			//debugger;
+			if (readyQueue.length != 1) {
+				readyQueue.push(result[i + 1]);
+				i++;
+			}
+			lastIndex = i;
+			//debugger;
+		} else if (readyQueue[0].Priority > result[i + 1].Priority) {
+			//debugger;
+			readyQueue.push(result[i + 1]);
+			const row = [
+				readyQueue[0].ID,
+				readyQueue[0].Process,
+				new Date(0, 0, 0, 0, 0, currentTime),
+				new Date(0, 0, 0, 0, 0, result[i + 1].Arrive),
+			];
+			processQueue.enqueue(row);
+			const remainingProcess: Process = {
+				ID: readyQueue[0].ID,
+				Process: readyQueue[0].Process,
+				BurstTime:
+					readyQueue[0].BurstTime - (result[i + 1].Arrive - currentTime),
+				Priority: readyQueue[0].Priority,
+				Arrive: readyQueue[0].Arrive,
+			};
+			//debugger;
+			currentTime = result[i + 1].Arrive;
+			readyQueue.shift();
+			readyQueue.push(remainingProcess);
+			readyQueue = sortByBurstTime(readyQueue);
+			i += 1;
+			lastIndex = i;
+			//debugger;
+		}
+	}
+	processQueue.queue.forEach((row) => {
+		rows.push(row);
+	});
+	console.log('process', processQueue);
+	console.log('row', rows);
+	return [columns, ...rows];
+};
+
+export const RoundRobin = (data: Process[], quantum: number) => {
+	const result = sortByArrivalTime(data);
+	let currentTime = result[0].Arrive;
+	const rows: (string | Date)[][] = [];
+	const processQueue = new Queue([]);
+	let readyQueue: Process[] = result;
+
+	while (readyQueue.length > 0) {
+		if (readyQueue[0].BurstTime <= quantum) {
+			processQueue.enqueue([
+				readyQueue[0].ID,
+				readyQueue[0].Process,
+				new Date(0, 0, 0, 0, 0, currentTime),
+				new Date(0, 0, 0, 0, 0, currentTime + readyQueue[0].BurstTime),
+			]);
+			currentTime += readyQueue[0].BurstTime;
+			readyQueue.shift();
+		} else if (readyQueue[0].BurstTime > quantum) {
+			processQueue.enqueue([
+				readyQueue[0].ID,
+				readyQueue[0].Process,
+				new Date(0, 0, 0, 0, 0, currentTime),
+				new Date(0, 0, 0, 0, 0, currentTime + quantum),
+			]);
+			currentTime += quantum;
+			const remainingProcess: Process = {
+				ID: readyQueue[0].ID,
+				Process: readyQueue[0].Process,
+				BurstTime: readyQueue[0].BurstTime - quantum,
+				Priority: readyQueue[0].Priority,
+				Arrive: readyQueue[0].Arrive,
+			};
+			readyQueue.shift();
+			readyQueue.push(remainingProcess);
+		}
+	}
+	processQueue.queue.forEach((row) => {
+		rows.push(row);
+	});
+	console.log('process', processQueue);
+	console.log('row', rows);
 	return [columns, ...rows];
 };
